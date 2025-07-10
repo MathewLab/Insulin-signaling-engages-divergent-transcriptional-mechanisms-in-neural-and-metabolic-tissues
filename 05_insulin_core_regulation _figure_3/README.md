@@ -28,7 +28,13 @@ Output: `plots/Scatter_InsulinCore.pdf`
 GO enrichment analysis was performed using **topGO (v2.56.0)** with the **elim algorithm** and **Fisher’s exact test**.  
 Each tissue used its own expressed gene background (≥10 counts).  
 P-values were adjusted using the **Benjamini–Hochberg method**.  
-Significant GO terms (padj < 0.05) were **grouped manually into supercategories** using pattern matching (`stringr`).  
+Significant GO terms (padj < 0.05) were **grouped manually into supercategories** using pattern matching (`stringr`). 
+
+### 4. Reactome-style schematic (Figure 3D) 
+Canonical insulin signaling pathway genes were visualized using a Reactome-style schematic created with DiagrammeR.  
+Node fill colors indicate tissue-specific significance (Red = OSNs, Blue = Fatbody, Purple = Both),  
+and directional regulation is shown with triangular glyphs (up/downregulation).
+
 
 
 
