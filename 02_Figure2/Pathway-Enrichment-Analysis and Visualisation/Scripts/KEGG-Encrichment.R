@@ -1,4 +1,4 @@
-library(readr) 
+library(readr)
 library(dplyr)
 library(clusterProfiler)
 library(ReactomePA)
@@ -12,7 +12,7 @@ output_dir <- "C:/Gene_Analysis/Pathway_Enrichment"
 final_summary_file <- file.path(output_dir, "Final_Filtered_Pathways.csv")
 if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
 
-# Map SYMBOL to ENTREZID and KEGG
+# Map SYMBOL to ENTREZID
 get_entrez_ids <- function(symbols) {
   bitr(symbols, fromType = "SYMBOL", toType = "ENTREZID", OrgDb = org.Dm.eg.db) %>%
     distinct(ENTREZID) %>%
@@ -25,12 +25,19 @@ entrez_to_symbol <- function(ids) {
   setNames(map$SYMBOL, map$ENTREZID)
 }
 
-# Enrichment wrapper
-run_enrichment <- function(entrez_ids, type = "KEGG") {
+# Enrichment wrapper with background
+run_enrichment <- function(entrez_ids, background_ids, type = "KEGG") {
   if (type == "KEGG") {
-    enrichKEGG(gene = entrez_ids, organism = 'dme', keyType = "ncbi-geneid", pvalueCutoff = 0.05)
+    enrichKEGG(gene = entrez_ids,
+               universe = background_ids,
+               organism = 'dme',
+               keyType = "ncbi-geneid",
+               pvalueCutoff = 0.05)
   } else if (type == "Reactome") {
-    enrichPathway(gene = entrez_ids, organism = "fly", pvalueCutoff = 0.05)
+    enrichPathway(gene = entrez_ids,
+                  universe = background_ids,
+                  organism = "fly",
+                  pvalueCutoff = 0.05)
   }
 }
 
@@ -45,7 +52,7 @@ add_gene_list_column <- function(enrich_res) {
   enrich_df
 }
 
-# Filter similar pathway terms using Jaccard-like distance
+# Filter similar pathway terms using Jaccard-like string similarity
 filter_similar_pathways <- function(df, similarity_threshold = 0.8) {
   keep <- logical(nrow(df))
   df <- df[order(df$p.adjust), ]
@@ -66,24 +73,33 @@ filter_similar_pathways <- function(df, similarity_threshold = 0.8) {
 # Dataset processor
 process_dataset <- function(file, dataset) {
   data <- read_csv(file, show_col_types = FALSE)
-  
-  # Filter genes
-  up_genes <- data %>% filter(!is.na(padj) & padj < 0.05 & log2FoldChange > 0) %>% pull(gene_symbol) %>% unique()
-  down_genes <- data %>% filter(!is.na(padj) & padj < 0.05 & log2FoldChange < 0) %>% pull(gene_symbol) %>% unique()
-  
+
+  # Define background: all tested genes (with padj not NA)
+  background_genes <- data %>%
+    filter(!is.na(padj)) %>%
+    pull(gene_symbol) %>%
+    unique()
+  background_entrez <- get_entrez_ids(background_genes)
+
+  # Filter significant genes
+  up_genes <- data %>% filter(!is.na(padj) & padj < 0.05 & log2FoldChange > 0) %>%
+    pull(gene_symbol) %>% unique()
+  down_genes <- data %>% filter(!is.na(padj) & padj < 0.05 & log2FoldChange < 0) %>%
+    pull(gene_symbol) %>% unique()
+
   # Convert to ENTREZ
   up_entrez <- get_entrez_ids(up_genes)
   down_entrez <- get_entrez_ids(down_genes)
-  
+
   final_combined <- list()
-  
+
   for (pathway_type in c("KEGG", "Reactome")) {
     for (group in c("up", "down")) {
       genes <- if (group == "up") up_entrez else down_entrez
       
-      if (length(genes) > 0) {
+      if (length(genes) > 0 && length(background_entrez) > 0) {
         enrich_res <- tryCatch({
-          run_enrichment(genes, type = pathway_type)
+          run_enrichment(genes, background_ids = background_entrez, type = pathway_type)
         }, error = function(e) NULL)
         
         if (!is.null(enrich_res) && nrow(enrich_res@result) > 0) {
@@ -98,11 +114,12 @@ process_dataset <- function(file, dataset) {
       }
     }
   }
-  
+
   # Combine all results and filter similar terms
   combined_df <- bind_rows(final_combined)
   if (nrow(combined_df) > 0) {
-    filtered <- combined_df %>% group_by(Dataset, Regulation, Source) %>% group_modify(~ filter_similar_pathways(.x))
+    filtered <- combined_df %>% group_by(Dataset, Regulation, Source) %>%
+      group_modify(~ filter_similar_pathways(.x))
     write.csv(filtered, final_summary_file, row.names = FALSE)
   }
 }
