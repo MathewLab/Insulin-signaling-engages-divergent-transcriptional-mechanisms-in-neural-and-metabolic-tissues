@@ -22,12 +22,14 @@ Differential expression analysis was performed using `DESeq2` (v1.44.1) in R (v4
 - **Figure 1D**: Pairwise correlation plot of commonly significant genes (padj < 0.05), categorized by quadrant:
   - Up-Up, Down-Down, Up-Down, Down-Up
 
-##  Folder Structure
-
-- `scripts/`: R scripts for each figure panel  
-- `data/`: Processed tables (e.g., DEG overlap, quadrant classification)
-
----
+## Folder Structure
+All analyses and visualizations for Figure 1 are organized under:
+`Differential-Expression_Analysis_and_Visualisation/DEG_Results/`
+- `scripts/`  
+  Contains R scripts used to generate each figure panel (volcano plots, Venn diagrams, pairwise scatter plots).
+- `data/`  
+  Includes processed result table such as: 
+  - Quadrant classification of common DEGs
 
 ##  Notes
 
