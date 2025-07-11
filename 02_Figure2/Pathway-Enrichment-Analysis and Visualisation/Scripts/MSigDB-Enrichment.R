@@ -1,5 +1,5 @@
 # MSigDB Enrichment Analysis for Drosophila RNA-seq
-# Description: Performs MSigDB-based pathway enrichment (KEGG subset) for up/downregulated genes in OSNs and Fatbody datasets
+# Description: Performs MSigDB-based KEGG subset enrichment for up/downregulated genes
 
 library(readr)
 library(dplyr)
@@ -65,6 +65,14 @@ filter_similar_terms <- function(df, threshold = 0.8) {
 process_dataset <- function(data_file, dataset_name, msigdb_sets) {
   data <- read_csv(data_file, show_col_types = FALSE)
   
+  # Background gene set: all genes tested for DE
+  background_genes <- data %>%
+    filter(!is.na(padj)) %>%
+    pull(gene_symbol) %>%
+    unique() %>%
+    map_symbols_to_entrez()
+  
+  # Define up/down regulated genes
   up_genes <- data %>% filter(padj < 0.05 & log2FoldChange > 0) %>% pull(gene_symbol) %>% unique()
   down_genes <- data %>% filter(padj < 0.05 & log2FoldChange < 0) %>% pull(gene_symbol) %>% unique()
   
@@ -74,8 +82,11 @@ process_dataset <- function(data_file, dataset_name, msigdb_sets) {
     gene_symbols <- if (condition == "up") up_genes else down_genes
     entrez_ids <- map_symbols_to_entrez(gene_symbols)
     
-    if (length(entrez_ids) > 0) {
-      enrichment <- enricher(gene = entrez_ids, TERM2GENE = msigdb_sets, pvalueCutoff = 0.05)
+    if (length(entrez_ids) > 0 && length(background_genes) > 0) {
+      enrichment <- enricher(gene = entrez_ids,
+                             universe = background_genes,
+                             TERM2GENE = msigdb_sets,
+                             pvalueCutoff = 0.05)
       
       if (!is.null(enrichment) && nrow(enrichment@result) > 0) {
         df <- add_symbol_column(as.data.frame(enrichment))
@@ -86,6 +97,7 @@ process_dataset <- function(data_file, dataset_name, msigdb_sets) {
     }
   }
   
+  # Filter redundant terms
   if (length(all_results) > 0) {
     filtered <- bind_rows(all_results) %>%
       group_by(Dataset, Regulation) %>%
