@@ -12,10 +12,8 @@ Differential expression analysis was performed using `DESeq2` (v1.44.1) in R (v4
 - Optional log₂ fold-change threshold: |log₂FC| ≥ 1
 
 ### Input/Output Files
-- `DESeq2_results_OSNs_full.csv` – Full results for OSNs
-- `DESeq2_results_FB_full.csv` – Full results for fat body
-
----
+- `InR_OSNs_All .csv – Full results for OSNs
+- `InR_Fatbody_All .csv – Full results for fat body
 
 ##  Figure 1 Panels
 
@@ -23,8 +21,6 @@ Differential expression analysis was performed using `DESeq2` (v1.44.1) in R (v4
 - **Figure 1C**: Venn diagrams showing gene overlaps across tissues
 - **Figure 1D**: Pairwise correlation plot of commonly significant genes (padj < 0.05), categorized by quadrant:
   - Up-Up, Down-Down, Up-Down, Down-Up
-
----
 
 ##  Folder Structure
 
