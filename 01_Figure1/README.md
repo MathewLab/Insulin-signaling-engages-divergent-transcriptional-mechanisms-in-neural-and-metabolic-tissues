@@ -29,7 +29,7 @@ All analyses and visualizations for Figure 1 are organized under:
   Contains R scripts used to generate each figure panel (volcano plots, Venn diagrams, pairwise scatter plots).
 - `data/`  
   Includes processed result table such as: 
-  - Quadrant classification of common DEGs
+  - Quadrant classification of common DEGs, Regulation-Directionality-Of-Common-genes-Padj 0.05.csv
 
 ##  Notes
 
