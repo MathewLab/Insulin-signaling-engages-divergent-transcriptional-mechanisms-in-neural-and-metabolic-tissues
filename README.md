@@ -31,7 +31,7 @@ This study presents a comparative transcriptomic analysis of *Drosophila melanog
 
 All code, processed data, and figure scripts are included in this repository. The full analysis is reproducible with R ≥ 4.4.1.
 
->  [Link to manuscript](#) (to be updated upon publication)
+>  [Link to manuscript](#) https://pubmed.ncbi.nlm.nih.gov/41714933/
 
 ## Contact
 
